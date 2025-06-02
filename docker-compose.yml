@@ -1,0 +1,20 @@
+services:
+  cubesatsim-aprs-parser:
+    image: ghcr.io/tomwardill/cubesatsim-aprs-parser:latest
+    devices:
+      - /dev/bus/usb
+    environment:
+      - MQTT_HOST=mosquitto
+      - MQTT_PORT=1883
+
+  mosquitto:
+    image: eclipse-mosquitto
+    hostname: mosquitto
+    container_name: mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto:/etc/mosquitto
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
