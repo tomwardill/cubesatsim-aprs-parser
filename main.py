@@ -13,6 +13,8 @@ def capture_stdin() -> Generator[str]:
         for line in iter(sys.stdin.readline, ""):
             line = line.strip()
             if line.startswith("APRS:"):
+                sys.stdout.write(f"Received line: {line}\n")
+                sys.stdout.flush()
                 yield line
             else:
                 sys.stderr.write(f"Skipping line: {line}\n")
