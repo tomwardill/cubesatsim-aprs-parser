@@ -1,5 +1,7 @@
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm
 
+ENV PYTHONUNBUFFERED=1
+
 # Set the working directory
 WORKDIR /app
 
