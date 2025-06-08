@@ -1,3 +1,4 @@
+from datetime import datetime
 import sys
 import re
 from typing import Generator, Tuple
@@ -16,9 +17,6 @@ def capture_stdin() -> Generator[str]:
                 sys.stdout.write(f"Received line: {line}\n")
                 sys.stdout.flush()
                 yield line
-            else:
-                sys.stderr.write(f"Skipping line: {line}\n")
-                sys.stderr.flush()
     except KeyboardInterrupt:
         sys.stdout.flush()
         pass
@@ -111,6 +109,8 @@ def decode_aprs(aprs: str) -> dict:
         data.update(decode_battery(aprs))
         data.update(decode_bme_sensor(aprs))
         data.update(decode_mpu6050(aprs))
+
+        data["timestamp"] = datetime.utcnow().isoformat() + "Z"
 
         # Add raw APRS data
         data["raw_aprs"] = aprs
