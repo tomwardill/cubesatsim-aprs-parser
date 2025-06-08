@@ -136,6 +136,14 @@ def connect_to_mqtt(
     return client
 
 
+def reconnect_to_mqtt(client, userdata, rc):
+    """Reconnect to the MQTT broker."""
+    if rc != 0:
+        print(f"MQTT connection failed with code {rc}. Reconnecting...")
+        client.reconnect()
+    else:
+        print("Connected to MQTT broker successfully.")
+
 @click.command()
 @click.option("--mqtt_host", default="localhost", help="MQTT broker host")
 @click.option("--mqtt_port", default=1883, help="MQTT broker port")
@@ -149,6 +157,7 @@ def main(mqtt_host, mqtt_port, mqtt_topic, mqtt_username, mqtt_password):
     client = connect_to_mqtt(
         mqtt_host, mqtt_port, mqtt_username, mqtt_password
     )
+    client.on_disconnect = reconnect_to_mqtt
     for aprs in capture_stdin():
         data = decode_aprs(aprs)
         if data:
