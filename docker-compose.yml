@@ -1,6 +1,6 @@
 services:
   cubesatsim-aprs-parser:
-    image: ghcr.io/tomwardill/cubesatsim-aprs-parser:latest
+    image: ghcr.io/tomwardill/cubesatsim-aprs-parser:main
     devices:
       - /dev/bus/usb
     environment:
