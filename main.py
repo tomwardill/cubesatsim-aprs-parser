@@ -62,16 +62,13 @@ def decode_bme_sensor(encoded_bme: str) -> dict:
 
 def decode_mpu6050(encoded_mpu: str) -> dict:
     search = re.search(
-        "MPU6050 ([+-]?[\\d]+\\.[\\d]+) ([+-]?[\\d]+\\.[\\d]+) ([+-]?[\\d]+\\.[\\d]+) ([+-]?[\\d]+\\.[\\d]+) ([+-]?[\\d]+\\.[\\d]+) ([+-]?[\\d]+\\.[\\d]+)",
+        "MPU6050 ([+-]?[\\d]+\\.[\\d]+) ([+-]?[\\d]+\\.[\\d]+) ([+-]?[\\d]+\\.[\\d]+)",
         encoded_mpu,
     )
     return {
-        "mpu_accel_x": float(search.group(1)) if search else None,
-        "mpu_accel_y": float(search.group(2)) if search else None,
-        "mpu_accel_z": float(search.group(3)) if search else None,
-        "mpu_gyro_x": float(search.group(4)) if search else None,
-        "mpu_gyro_y": float(search.group(5)) if search else None,
-        "mpu_gyro_z": float(search.group(6)) if search else None,
+        "mpu_yaw": float(search.group(1)) if search else None,
+        "mpu_pitch": float(search.group(2)) if search else None,
+        "mpu_roll": float(search.group(3)) if search else None,
     }
 
 
@@ -114,8 +111,6 @@ def decode_aprs(aprs: str) -> dict:
         data.update(decode_battery(aprs))
         data.update(decode_bme_sensor(aprs))
         data.update(decode_mpu6050(aprs))
-        data.update(decode_gps(aprs))
-        data.update(decode_mcu_temp(aprs))
 
         # Add raw APRS data
         data["raw_aprs"] = aprs

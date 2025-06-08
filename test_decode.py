@@ -8,7 +8,7 @@ from main import (
     decode_mcu_temp
 )
 
-sample = "APRS: 2E0JJI-11>APCSS:=5324.08N\00132.20WShi hi BAT 4.42 -340.3 OK BME280 42.45 993.45 166.17 14.49 MPU6050 8.60 -2.72 0.15 0.04 -0.01 1.02 GPS 0.0000 0.0000 0.00 TMP 43.50"
+sample = "APRS: 2E0JJI-11>APCSS:=5324.08N\00132.20WShi hi BAT 4.32 -514.7 OK BME280 27.55 998.38 124.55 27.48 MPU6050 -2.06 0.16 0.00"
 
 
 def test_with_sample():
@@ -16,22 +16,15 @@ def test_with_sample():
     assert result["callsign"] == "2E0JJI-11"
     assert result["latitude"] == "53.40222222222222"
     assert result["longitude"] == "-1.5388888888888888"
-    assert result["battery_voltage"] == 4.42
-    assert result["battery_current"] == -340.3
-    assert result["bme_temperature"] == 42.45
-    assert result["bme_pressure"] == 993.45
-    assert result["bme_altitude"] == 166.17
-    assert result["bme_humidity"] == 14.49
-    assert result["mpu_accel_x"] == 8.60
-    assert result["mpu_accel_y"] == -2.72
-    assert result["mpu_accel_z"] == 0.15
-    assert result["mpu_gyro_x"] == 0.04
-    assert result["mpu_gyro_y"] == -0.01
-    assert result["mpu_gyro_z"] == 1.02
-    assert result["gps_latitude"] == 0.0
-    assert result["gps_longitude"] == 0.0
-    assert result["gps_altitude"] == 0.0
-    assert result["mcu_temperature"] == 43.50
+    assert result["battery_voltage"] == 4.32
+    assert result["battery_current"] == -514.7
+    assert result["bme_temperature"] == 27.55
+    assert result["bme_pressure"] == 998.38
+    assert result["bme_altitude"] == 124.55
+    assert result["bme_humidity"] == 27.48
+    assert result["mpu_yaw"] == -2.06
+    assert result["mpu_pitch"] == 0.16
+    assert result["mpu_roll"] == 0.00
     assert result["raw_aprs"] == sample.split("APRS: ")[1]
 
 
@@ -43,8 +36,8 @@ def test_decode_position():
 
 def test_decode_battery():
     battery_details = decode_battery(sample)
-    assert battery_details["battery_voltage"] == 4.42
-    assert battery_details["battery_current"] == -340.3
+    assert battery_details["battery_voltage"] == 4.32
+    assert battery_details["battery_current"] == -514.7
 
 
 def test_decode_bme_sensor():
@@ -52,10 +45,10 @@ def test_decode_bme_sensor():
     assert isinstance(
         result, dict
     )  # Assuming it returns an empty dict or similar structure
-    assert result["bme_temperature"] == 42.45
-    assert result["bme_pressure"] == 993.45
-    assert result["bme_altitude"] == 166.17
-    assert result["bme_humidity"] == 14.49
+    assert result["bme_temperature"] == 27.55
+    assert result["bme_pressure"] == 998.38
+    assert result["bme_altitude"] == 124.55
+    assert result["bme_humidity"] == 27.48
 
 
 def test_decode_mpu6050():
@@ -63,26 +56,7 @@ def test_decode_mpu6050():
     assert isinstance(
         result, dict
     )  # Assuming it returns an empty dict or similar structure
-    assert result["mpu_accel_x"] == 8.60
-    assert result["mpu_accel_y"] == -2.72
-    assert result["mpu_accel_z"] == 0.15
-    assert result["mpu_gyro_x"] == 0.04
-    assert result["mpu_gyro_y"] == -0.01
-    assert result["mpu_gyro_z"] == 1.02
+    assert result["mpu_yaw"] == -2.06
+    assert result["mpu_pitch"] == 0.16
+    assert result["mpu_roll"] == 0.00
 
-
-def test_decode_gps():
-    result = decode_gps(sample)
-    assert isinstance(
-        result, dict
-    )  # Assuming it returns an empty dict or similar structure
-    assert result["gps_latitude"] == 0.0  # GPS values in sample are 0.0000
-    assert result["gps_longitude"] == 0.0
-    assert result["gps_altitude"] == 0.0
-
-def test_decode_mcu_temp():
-    result = decode_mcu_temp(sample)
-    assert isinstance(
-        result, dict
-    )  # Assuming it returns an empty dict or similar structure
-    assert result["mcu_temperature"] == 43.50
