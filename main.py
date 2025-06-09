@@ -1,7 +1,8 @@
 from datetime import datetime
+import json
 import sys
 import re
-from typing import Generator, Tuple
+from typing import Generator
 
 import click
 from latloncalc.latlon import LatLon, string2latlon
@@ -161,7 +162,7 @@ def main(mqtt_host, mqtt_port, mqtt_topic, mqtt_username, mqtt_password):
     for aprs in capture_stdin():
         data = decode_aprs(aprs)
         if data:
-            client.publish(mqtt_topic, str(data))
+            client.publish(mqtt_topic, json.dumps(data))
             print(f"Published to {mqtt_topic}: {data}")
         else:
             print("No valid APRS data to publish.")
