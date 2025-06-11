@@ -90,6 +90,23 @@ def decode_mcu_temp(encoded_mcu: str) -> dict:
     }
 
 
+def decode_voltages(encoded_voltages: str) -> dict:
+    search = re.search(
+        "VOL ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+)",
+        encoded_voltages,
+    )
+    return {
+        "PLUS_X_voltage": float(search.group(1)) if search else None,
+        "MINUS_X_voltage": float(search.group(2)) if search else None,
+        "PLUS_Y_voltage": float(search.group(3)) if search else None,
+        "MINUS_Y_voltage": float(search.group(4)) if search else None,
+        "PLUS_Z_voltage": float(search.group(5)) if search else None,
+        "MINUS_Z_voltage": float(search.group(6)) if search else None,
+        "BAT_voltage": float(search.group(7)) if search else None,
+        "BUS_voltage": float(search.group(8)) if search else None,
+    }
+
+
 def decode_aprs(aprs: str) -> dict:
     """Decode the APRS data."""
     data = {}
@@ -110,6 +127,7 @@ def decode_aprs(aprs: str) -> dict:
         data.update(decode_battery(aprs))
         data.update(decode_bme_sensor(aprs))
         data.update(decode_mpu6050(aprs))
+        data.update(decode_voltages(aprs))
 
         data["timestamp"] = datetime.utcnow().isoformat() + "Z"
 

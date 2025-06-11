@@ -4,11 +4,10 @@ from main import (
     decode_battery,
     decode_bme_sensor,
     decode_mpu6050,
-    decode_gps,
-    decode_mcu_temp
+    decode_voltages
 )
 
-sample = "APRS: 2E0JJI-11>APCSS:=5324.08N\00132.20WShi hi BAT 4.32 -514.7 OK BME280 27.55 998.38 124.55 27.48 MPU6050 -2.06 0.16 0.00"
+sample = "APRS: 2E0JJI-11>APCSS:=5324.08N\00132.20WShi hi BAT 4.32 -514.7 VOL 4.25 1.71 3.33 1.49 2.64 0.86 4.49 0.00 OK BME280 27.55 998.38 124.55 27.48 MPU6050 -2.06 0.16 0.00"
 
 
 def test_with_sample():
@@ -25,6 +24,14 @@ def test_with_sample():
     assert result["mpu_yaw"] == -2.06
     assert result["mpu_pitch"] == 0.16
     assert result["mpu_roll"] == 0.00
+    assert result["PLUS_X_voltage"] == 4.25
+    assert result["MINUS_X_voltage"] == 1.71
+    assert result["PLUS_Y_voltage"] == 3.33
+    assert result["MINUS_Y_voltage"] == 1.49
+    assert result["PLUS_Z_voltage"] == 2.64
+    assert result["MINUS_Z_voltage"] == 0.86
+    assert result["BAT_voltage"] == 4.49
+    assert result["BUS_voltage"] == 0.00
     assert result["raw_aprs"] == sample.split("APRS: ")[1]
 
 
@@ -60,3 +67,17 @@ def test_decode_mpu6050():
     assert result["mpu_pitch"] == 0.16
     assert result["mpu_roll"] == 0.00
 
+
+def test_decode_voltages():
+    result = decode_voltages(sample)
+    assert isinstance(
+        result, dict
+    )  # Assuming it returns an empty dict or similar structure
+    assert result["PLUS_X_voltage"] == 4.25
+    assert result["MINUS_X_voltage"] == 1.71
+    assert result["PLUS_Y_voltage"] == 3.33
+    assert result["MINUS_Y_voltage"] == 1.49
+    assert result["PLUS_Z_voltage"] == 2.64
+    assert result["MINUS_Z_voltage"] == 0.86
+    assert result["BAT_voltage"] == 4.49
+    assert result["BUS_voltage"] == 0.00
