@@ -29,15 +29,14 @@
         }
     </style>
 
-    <canvas id="canvas"></canvas>
+    <canvas id="c"></canvas>
 
     <script type="importmap">
         {
             "imports": {
                 "three": "https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js",
                 "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/",
-                "mqtt": "https://unpkg.com/mqtt/dist/mqtt.esm.js",
-                "crtfilterwebgl": "/CRTFilter.js"
+                "mqtt": "https://unpkg.com/mqtt/dist/mqtt.esm.js"
             }
         }
         </script>
@@ -46,7 +45,6 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import mqtt from 'mqtt';
-        import { CRTFilterWebGL } from 'crtfilterwebgl';
 
         function resizeRendererToDisplaySize(renderer) {
             const canvas = renderer.domElement;
@@ -61,28 +59,8 @@
 
         function main() {
 
-            const crt = new CRTFilterWebGL(document.getElementById('canvas'));
-            
-
-            const canvas = crt.sourceCanvas
-            //const canvas = crt.source;
-            //const crtEffect = new CRTFilterWebGL(canvas);
-            //crtEffect.start();
-            //debugger;
-            //const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
-            /*const renderer = new CRTFilterWebGL(canvas, {
-                antialias: true,
-                resolution: 1.0,
-                scanlineIntensity: 0.5,
-                curvature: 0.2,
-                vignette: 0.5
-            });
-            renderer.start();
-            */
-
-            crt.start();
-
-            
+            const canvas = document.querySelector('#c');
+            const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
 
             const fov = 75;
             const aspect = 2; // the canvas default
