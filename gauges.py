@@ -6,6 +6,8 @@ import click
 
 number_channels = 16
 servos = {
+    "battery_current": 0,
+    "BAT_voltage": 1,
     "MINUS_X_voltage": 2,
     "PLUS_X_voltage": 3,
     "MINUS_Y_voltage": 4,
@@ -37,7 +39,12 @@ def on_message(client, userdata, message):
     for key, channel in servos.items():
         if key in data:
             voltage = data[key]
-            servo_position = scale_voltage_to_servo(voltage)
+            if key != "battery_current":
+                servo_position = scale_voltage_to_servo(voltage)
+            else:
+                # For battery current, scale to a different range if needed
+                # Here we assume battery current is in mA and scale it to 0-90 degrees
+                servo_position = int((voltage / 1000.0) * 90)
             if servo_position is not None:
                 print(f"Setting servo {channel} to position {servo_position} for {key}")
                 pca.servo[channel].angle = servo_position
