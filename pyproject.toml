@@ -10,4 +10,5 @@ dependencies = [
     "latloncalc>=1.5.6",
     "paho-mqtt>=2.1.0",
     "pytest>=8.3.5",
+    "rpi-gpio>=0.7.1",
 ]
