@@ -70,6 +70,12 @@ def main(mqtt_host, mqtt_port, mqtt_topic, mqtt_username, mqtt_password):
 
     client.loop_start()
 
+    # Zero all servos at startup
+    for channel in range(number_channels):
+        pca.servo[channel].angle = 0
+        print(f"Initialized servo {channel} to position 0")
+
+
     client.subscribe(mqtt_topic)
     print(f"Subscribed to topic: {mqtt_topic}")
     client.on_message = on_message
