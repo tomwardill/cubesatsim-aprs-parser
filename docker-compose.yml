@@ -1,11 +1,16 @@
 services:
   cubesatsim-aprs-parser:
-    image: ghcr.io/tomwardill/cubesatsim-aprs-parser:main
+    image: ghcr.io/tomwardill/cubesatsim-aprs-parser-parser:main
     devices:
       - /dev/bus/usb
     environment:
       - MQTT_HOST=mosquitto
       - MQTT_PORT=1883
+
+  cubesatsim-aprs-visualisation:
+    image: ghcr.io/tomwardill/cubesatsim-aprs-parser-visualisation:main
+    ports:
+      - "80:80"
 
   mosquitto:
     image: eclipse-mosquitto
