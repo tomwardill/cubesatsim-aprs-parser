@@ -104,7 +104,7 @@
             pivot.add(antennaWireframeRight);
             scene.add(pivot);
 
-            let client = mqtt.connect('mqtt://panda-experiments:9001');
+            let client = mqtt.connect('mqtt://' + window.location.host + ':9001');
 
             client.on('connect', function () {
                 console.log('Connected to MQTT broker');
