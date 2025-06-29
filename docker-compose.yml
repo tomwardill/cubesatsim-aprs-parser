@@ -7,6 +7,16 @@ services:
       - MQTT_HOST=mosquitto
       - MQTT_PORT=1883
 
+  cubesatsim-aprs-gauges:
+    image: ghcr.io/tomwardill/cubesatsim-aprs-parser-gauges:main
+    devices:
+      - /dev/i2c-1
+      - /dev/i2c-20
+      - /dev/i2c-21
+    environment:
+      - MQTT_HOST=mosquitto
+      - MQTT_PORT=1883
+
   cubesatsim-aprs-visualisation:
     image: ghcr.io/tomwardill/cubesatsim-aprs-parser-visualisation:main
     ports:
