@@ -16,8 +16,6 @@
         }
     </style>
 
-    <div id="info">Description</div>
-
     <style>
         #info {
             position: absolute;
@@ -36,6 +34,9 @@
             "imports": {
                 "three": "https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js",
                 "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/",
+                "three/examples/jsm/lines/LineMaterial.js": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/lines/LineMaterial.js",
+                "three/examples/jsm/lines/LineSegments2.js": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/lines/LineSegments2.js",
+                "three/addons/lines/LineSegmentsGeometry.js": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/lines/LineSegmentsGeometry.js",
                 "mqtt": "https://unpkg.com/mqtt/dist/mqtt.esm.js"
             }
         }
@@ -44,6 +45,9 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
+        import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js';
+        import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
         import mqtt from 'mqtt';
 
         function resizeRendererToDisplaySize(renderer) {
@@ -74,10 +78,19 @@
 
             function convertToWireframe(geometry) {
                 const wireframeGeometry = new THREE.WireframeGeometry(geometry);
-                const line = new THREE.LineSegments(wireframeGeometry);
-                line.material.depthTest = true;
-                line.material.opacity = 0.50;
-                line.material.transparent = true;
+
+                const wireframeMaterial = new LineMaterial({
+                    color: 0x00ff00,
+                    linewidth: 3,
+                    opacity: 0.75,
+                    transparent: true
+                });
+
+                const lineSegmentsGeometry = new LineSegmentsGeometry();
+                lineSegmentsGeometry.fromWireframeGeometry(wireframeGeometry);
+
+                const line = new LineSegments2(lineSegmentsGeometry);
+                line.material = wireframeMaterial;
                 return line;
             }
 
@@ -104,7 +117,8 @@
             pivot.add(antennaWireframeRight);
             scene.add(pivot);
 
-            let client = mqtt.connect('mqtt://' + window.location.host + ':9001');
+            //let client = mqtt.connect('mqtt://' + window.location.host + ':9001');
+            let client = mqtt.connect('mqtt://' + "zero2" + ':9001');
 
             client.on('connect', function () {
                 console.log('Connected to MQTT broker');
