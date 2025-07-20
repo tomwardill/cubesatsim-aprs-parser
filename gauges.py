@@ -44,7 +44,11 @@ def on_message(client, userdata, message):
             else:
                 # For battery current, scale to a different range if needed
                 # Here we assume battery current is in mA and scale it to 0-90 degrees
-                servo_position = int((voltage / 1000.0) * 90)
+                # For battery current, center at 45 degrees and scale +/-45 degrees
+                # Assuming a typical range of 0-1000 mA
+                servo_position = 45 + int(((voltage / 1000.0) * 90) - 45)
+                # Ensure we stay within valid servo range (0-90)
+                servo_position = max(0, min(90, servo_position))
             if servo_position is not None:
                 print(f"Setting servo {channel} to position {servo_position} for {key}")
                 pca.servo[channel].angle = servo_position
@@ -79,7 +83,10 @@ def main(mqtt_host, mqtt_port, mqtt_topic, mqtt_username, mqtt_password):
 
     # Zero all servos at startup
     for channel in range(number_channels):
-        pca.servo[channel].angle = 0
+        if channel == 0:
+            pca.servo[channel].angle = 45  # Center battery current servo
+        else:
+            pca.servo[channel].angle = 0
         print(f"Initialized servo {channel} to position 0")
 
 
