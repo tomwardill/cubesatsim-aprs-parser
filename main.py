@@ -92,7 +92,7 @@ def decode_mcu_temp(encoded_mcu: str) -> dict:
 
 def decode_voltages(encoded_voltages: str) -> dict:
     search = re.search(
-        "VOL ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+)",
+        "VOL ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+) ([\\d]+\\.[\\d]+)",
         encoded_voltages,
     )
     return {
@@ -103,7 +103,6 @@ def decode_voltages(encoded_voltages: str) -> dict:
         "PLUS_Z_voltage": float(search.group(5)) if search else None,
         "MINUS_Z_voltage": float(search.group(6)) if search else None,
         "BAT_voltage": float(search.group(7)) if search else None,
-        "BUS_voltage": float(search.group(8)) if search else None,
     }
 
 

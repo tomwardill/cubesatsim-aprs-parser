@@ -7,8 +7,7 @@ from main import (
     decode_voltages
 )
 
-sample = "APRS: 2E0JJI-11>APCSS:=5324.08N\00132.20WShi hi BAT 4.32 -514.7 VOL 4.25 1.71 3.33 1.49 2.64 0.86 4.49 0.00 OK BME280 27.55 998.38 124.55 27.48 MPU6050 -2.06 0.16 0.00"
-
+sample = "APRS: AMSAT-11>APCSS:=3901.39N\\07704.41WShi hi BAT 4.50 -394.2 VOL 0.54 3.33 2.38 2.71 4.49 2.81 4.50 OK BME280 33.33 992.57 173.64 31.07 MPU6050 -55.51 -0.17 0.10 "
 
 def test_with_sample():
     result = decode_aprs(sample)
