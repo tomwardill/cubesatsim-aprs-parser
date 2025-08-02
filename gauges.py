@@ -32,6 +32,9 @@ frame_count = 0
 
 def display(led: HT16K33SegmentGen, message: str):
 
+    if len(message) < 8:
+        message = message.zfill(8)
+
     led.clear()
     for i, char in enumerate(message):
         if i < 8:
