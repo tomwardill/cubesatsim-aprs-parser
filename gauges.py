@@ -7,12 +7,12 @@ import click
 number_channels = 16
 servos = {
     "battery_current": 0,
-    "BAT_voltage": 1,
-    "MINUS_X_voltage": 2,
-    "PLUS_X_voltage": 3,
-    "MINUS_Y_voltage": 4,
-    "PLUS_Y_voltage": 5,
-    "MINUS_Z_voltage": 6,
+    "BAT_voltage": 4,
+    "MINUS_X_voltage": 1,
+    "PLUS_X_voltage": 5,
+    "MINUS_Y_voltage": 2,
+    "PLUS_Y_voltage": 6,
+    "MINUS_Z_voltage": 3,
     "PLUS_Z_voltage": 7,
 }
 
