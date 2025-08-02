@@ -150,10 +150,11 @@ def main(mqtt_host, mqtt_port, mqtt_topic, mqtt_username, mqtt_password):
         print(f"Initialized servo {channel} to position 0")
 
     # Initialize displays
-    display(frame_display, "0")
-    display(rx_freq_display, "434900")
-    display(tx_freq_display, "435000")
+    segment_display(frame_display, "0")
+    segment_display(rx_freq_display, "434900")
+    segment_display(tx_freq_display, "435000")
 
+    matrix_display(lcd, {"callsign": "WAITING"})
 
     client.subscribe(mqtt_topic)
     print(f"Subscribed to topic: {mqtt_topic}")
