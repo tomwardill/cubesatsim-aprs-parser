@@ -56,7 +56,8 @@ def on_message(client, userdata, message):
     try:
         data = json.loads(message.payload.decode("utf-8"))
         print(f"Received message on topic {message.topic}: {data}")
-        frame_count += 1
+        global frame_count
+        frame_count = frame_count + 1
         display(frame_display, str(frame_count).zfill(8))
     except json.JSONDecodeError as e:
         print(f"Failed to decode JSON from message: {e}")
