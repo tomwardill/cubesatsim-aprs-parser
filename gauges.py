@@ -1,6 +1,10 @@
 import json
+from time import sleep
 
 from adafruit_servokit import ServoKit
+from ht16k33 import HT16K33SegmentGen
+import busio
+import board
 import paho.mqtt.client as mqtt
 import click
 
@@ -18,6 +22,23 @@ servos = {
 
 pca = ServoKit(channels=number_channels)
 
+i2c = busio.I2C(scl=board.SCL, sda=board.SDA)
+frame_display = HT16K33SegmentGen(i2c, i2c_address=0x70, digits=8)
+rx_freq_display = HT16K33SegmentGen(i2c, i2c_address=0x71, digits=8)
+tx_freq_display = HT16K33SegmentGen(i2c, i2c_address=0x72, digits=8)
+
+frame_count = 0
+
+
+def display(led: HT16K33SegmentGen, message: str):
+
+    led.clear()
+    for i, char in enumerate(message):
+        if i < 8:
+            led.set_character(char, i)
+    led.draw()
+
+
 
 def scale_voltage_to_servo(voltage):
     """Scale voltage to servo position."""
@@ -32,6 +53,8 @@ def on_message(client, userdata, message):
     try:
         data = json.loads(message.payload.decode("utf-8"))
         print(f"Received message on topic {message.topic}: {data}")
+        frame_count += 1
+        display(frame_display, str(frame_count).zfill(8))
     except json.JSONDecodeError as e:
         print(f"Failed to decode JSON from message: {e}")
         return
@@ -81,6 +104,16 @@ def main(mqtt_host, mqtt_port, mqtt_topic, mqtt_username, mqtt_password):
 
     client.loop_start()
 
+    # Sweep all servos because it looks cool
+    for channel in range(number_channels):
+        pca.servo[channel].angle = 0
+        print(f"Sweeping servo {channel} to position 0")
+    sleep(1)
+    for channel in range(number_channels):
+        pca.servo[channel].angle = 90
+        print(f"Sweeping servo {channel} to position 90")
+    sleep(1)
+
     # Zero all servos at startup
     for channel in range(number_channels):
         if channel == 0:
@@ -88,6 +121,11 @@ def main(mqtt_host, mqtt_port, mqtt_topic, mqtt_username, mqtt_password):
         else:
             pca.servo[channel].angle = 0
         print(f"Initialized servo {channel} to position 0")
+
+    # Initialize displays
+    display(frame_display, "0")
+    display(rx_freq_display, "434900")
+    display(tx_freq_display, "435000")
 
 
     client.subscribe(mqtt_topic)
