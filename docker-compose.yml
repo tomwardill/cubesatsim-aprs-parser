@@ -1,6 +1,7 @@
 services:
   cubesatsim-aprs-parser:
     image: ghcr.io/tomwardill/cubesatsim-aprs-parser-parser:main
+    restart: unless-stopped
     devices:
       - /dev/bus/usb
     environment:
@@ -9,6 +10,7 @@ services:
 
   cubesatsim-aprs-gauges:
     image: ghcr.io/tomwardill/cubesatsim-aprs-parser-gauges:main
+    restart: unless-stopped
     devices:
       - /dev/i2c-1
       - /dev/i2c-20
@@ -20,6 +22,7 @@ services:
 
   cubesatsim-aprs-visualisation:
     image: ghcr.io/tomwardill/cubesatsim-aprs-parser-visualisation:main
+    restart: unless-stopped
     ports:
       - "80:80"
 
