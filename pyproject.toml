@@ -16,4 +16,5 @@ dependencies = [
     "paho-mqtt>=2.1.0",
     "pytest>=8.3.5",
     "rpi-gpio>=0.7.1",
+    "adafruit-circuitpython-charlcd>=3.5.3",
 ]

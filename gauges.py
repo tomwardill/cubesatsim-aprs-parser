@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 from time import sleep
 
@@ -5,6 +6,8 @@ from adafruit_servokit import ServoKit
 from ht16k33 import HT16K33SegmentGen
 import busio
 import board
+import digitalio
+import adafruit_character_lcd.character_lcd_spi as character_lcd
 import paho.mqtt.client as mqtt
 import click
 
@@ -27,10 +30,16 @@ frame_display = HT16K33SegmentGen(i2c, i2c_address=0x70, digits=8)
 rx_freq_display = HT16K33SegmentGen(i2c, i2c_address=0x71, digits=8)
 tx_freq_display = HT16K33SegmentGen(i2c, i2c_address=0x72, digits=8)
 
+spi = busio.SPI(board.SCK, MOSI=board.MOSI)
+latch = digitalio.DigitalInOut(board.D8)
+cols = 20
+rows = 4
+lcd = character_lcd.Character_LCD_SPI(spi, latch, cols, rows)
+
 frame_count = 0
 
 
-def display(led: HT16K33SegmentGen, message: str):
+def segment_display(led: HT16K33SegmentGen, message: str):
 
     if len(message) < 8:
         message = message.zfill(8)
@@ -41,6 +50,19 @@ def display(led: HT16K33SegmentGen, message: str):
             led.set_character(char, i)
     led.draw()
 
+
+def matrix_display(lcd: character_lcd.Character_LCD_SPI, payload: dict):
+    """Display a message on the LCD."""
+    lcd.clear()
+
+    message = ""
+    message += payload.get("callsign", "Unknown") + "\n"
+    message += f"{payload.get('battery_voltage', '0.0V')}V {payload.get('battery_current', '0.0mA')}mA\n"
+    message += f"{payload.get('mpu_roll', '0.0')}, {payload.get('mpu_pitch', '0.0')}, {payload.get('mpu_yaw', '0.0')}\n"
+    message += f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+
+    lcd.message = message
+    print(f"LCD Display: {message}")
 
 
 def scale_voltage_to_servo(voltage):
@@ -58,7 +80,8 @@ def on_message(client, userdata, message):
         print(f"Received message on topic {message.topic}: {data}")
         global frame_count
         frame_count = frame_count + 1
-        display(frame_display, str(frame_count).zfill(8))
+        segment_display(frame_display, str(frame_count).zfill(8))
+        matrix_display(lcd, data)
     except json.JSONDecodeError as e:
         print(f"Failed to decode JSON from message: {e}")
         return
