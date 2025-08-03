@@ -162,7 +162,7 @@ def main(mqtt_host, mqtt_port, mqtt_topic, mqtt_username, mqtt_password):
 
     try:
         while True:
-            pass  # Keep the script running
+            sleep(0.1)  # Keep the script running
     except KeyboardInterrupt:
         print("Disconnecting from MQTT broker...")
         client.loop_stop()
