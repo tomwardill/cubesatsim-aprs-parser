@@ -33,6 +33,9 @@ try:
     tx_freq_display = HT16K33SegmentGen(i2c, i2c_address=0x72, digits=8)
     displays_enabled = True
 except OSError as e:
+    frame_display = None
+    rx_freq_display = None
+    tx_freq_display = None
     print(f"Failed to initialize HT16K33 displays: {e}")
 
 spi = busio.SPI(board.SCK, MOSI=board.MOSI)
