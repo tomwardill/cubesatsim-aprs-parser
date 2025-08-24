@@ -26,9 +26,14 @@ servos = {
 pca = ServoKit(channels=number_channels)
 
 i2c = busio.I2C(scl=board.SCL, sda=board.SDA)
-frame_display = HT16K33SegmentGen(i2c, i2c_address=0x70, digits=8)
-rx_freq_display = HT16K33SegmentGen(i2c, i2c_address=0x71, digits=8)
-tx_freq_display = HT16K33SegmentGen(i2c, i2c_address=0x72, digits=8)
+displays_enabled = False
+try:
+    frame_display = HT16K33SegmentGen(i2c, i2c_address=0x70, digits=8)
+    rx_freq_display = HT16K33SegmentGen(i2c, i2c_address=0x71, digits=8)
+    tx_freq_display = HT16K33SegmentGen(i2c, i2c_address=0x72, digits=8)
+    displays_enabled = True
+except OSError as e:
+    print(f"Failed to initialize HT16K33 displays: {e}")
 
 spi = busio.SPI(board.SCK, MOSI=board.MOSI)
 latch = digitalio.DigitalInOut(board.D8)
@@ -40,7 +45,9 @@ frame_count = 0
 
 
 def segment_display(led: HT16K33SegmentGen, message: str):
-
+    if not displays_enabled:
+        print("Displays are not enabled.")
+        return
     if len(message) < 8:
         message = message.zfill(8)
 
@@ -53,6 +60,10 @@ def segment_display(led: HT16K33SegmentGen, message: str):
 
 def matrix_display(lcd: character_lcd.Character_LCD_SPI, payload: dict):
     """Display a message on the LCD."""
+    if not displays_enabled:
+        print("Displays are not enabled.")
+        return
+
     lcd.clear()
 
     message = ""
