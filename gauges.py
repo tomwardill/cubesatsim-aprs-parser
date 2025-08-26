@@ -71,7 +71,7 @@ def matrix_display(lcd: character_lcd.Character_LCD_SPI, payload: dict):
 
     message = ""
     message += payload.get("callsign", "Unknown") + "\n"
-    message += f"{payload.get('battery_voltage', '0.0V')}V {payload.get('battery_current', '0.0mA')}mA\n"
+    message += f"{payload.get('battery_voltage', '0.0')}V {payload.get('battery_current', '0.0')}mA\n"
     message += f"{payload.get('mpu_roll', '0.0')}, {payload.get('mpu_pitch', '0.0')}, {payload.get('mpu_yaw', '0.0')}\n"
     message += f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
 
@@ -94,8 +94,9 @@ def on_message(client, userdata, message):
         print(f"Received message on topic {message.topic}: {data}")
         global frame_count
         frame_count = frame_count + 1
-        segment_display(frame_display, str(frame_count).zfill(8))
-        matrix_display(lcd, data)
+        if displays_enabled:
+            segment_display(frame_display, str(frame_count).zfill(8))
+            matrix_display(lcd, data)
     except json.JSONDecodeError as e:
         print(f"Failed to decode JSON from message: {e}")
         return
