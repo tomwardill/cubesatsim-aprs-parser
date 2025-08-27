@@ -1,6 +1,6 @@
 services:
   cubesatsim-aprs-parser:
-    image: ghcr.io/tomwardill/cubesatsim-aprs-parser-parser:main
+    image: ${REGISTRY}/cubesatsim-aprs-parser-parser:main
     restart: unless-stopped
     devices:
       - /dev/bus/usb
@@ -9,7 +9,7 @@ services:
       - MQTT_PORT=1883
 
   cubesatsim-aprs-gauges:
-    image: ghcr.io/tomwardill/cubesatsim-aprs-parser-gauges:main
+    image: ${REGISTRY}/cubesatsim-aprs-parser-gauges:main
     restart: unless-stopped
     devices:
       - /dev/i2c-1
@@ -21,7 +21,7 @@ services:
       - MQTT_PORT=1883
 
   cubesatsim-aprs-buttons:
-    image: ghcr.io/tomwardill/cubesatsim-aprs-parser-buttons:main
+    image: ${REGISTRY}/cubesatsim-aprs-parser-buttons:main
     restart: unless-stopped
     devices:
       - /dev/gpiomem
@@ -31,7 +31,7 @@ services:
       - MQTT_PORT=1883
 
   cubesatsim-aprs-visualisation:
-    image: ghcr.io/tomwardill/cubesatsim-aprs-parser-visualisation:main
+    image: ${REGISTRY}/cubesatsim-aprs-parser-visualisation:main
     restart: unless-stopped
     ports:
       - "80:80"
