@@ -11,8 +11,13 @@ RUN apt-get update && \
     rtl-sdr \
     multimon-ng \
     swig \
-    liblgpio-dev \
     && rm -rf /var/lib/apt/lists/*
+
+RUN wget http://abyz.me.uk/lg/lg.zip && \
+    unzip lg.zip && \
+    cd lg && \
+    make && \
+    make install
 
 # Copy the application files
 COPY . .
