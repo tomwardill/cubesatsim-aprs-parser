@@ -28,8 +28,8 @@ pca = ServoKit(channels=number_channels)
 i2c = busio.I2C(scl=board.SCL, sda=board.SDA)
 displays_enabled = False
 try:
-    frame_display = HT16K33SegmentGen(i2c, i2c_address=0x70, digits=8)
-    rx_freq_display = HT16K33SegmentGen(i2c, i2c_address=0x71, digits=8)
+    frame_display = HT16K33SegmentGen(i2c, i2c_address=0x71, digits=8)
+    rx_freq_display = HT16K33SegmentGen(i2c, i2c_address=0x70, digits=8)
     tx_freq_display = HT16K33SegmentGen(i2c, i2c_address=0x72, digits=8)
     displays_enabled = True
 except OSError as e:
