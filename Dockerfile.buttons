@@ -1,0 +1,15 @@
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm
+
+ENV PYTHONUNBUFFERED=1
+
+# Set the working directory
+WORKDIR /app
+
+
+# Copy the application files
+COPY . .
+
+# Install Python dependencies
+RUN uv sync
+
+CMD ["./run-buttons.sh"]

@@ -20,6 +20,16 @@ services:
       - MQTT_HOST=mosquitto
       - MQTT_PORT=1883
 
+  cubesatsim-aprs-buttons:
+    image: ghcr.io/tomwardill/cubesatsim-aprs-parser-buttons:main
+    restart: unless-stopped
+    devices:
+      - /dev/gpiomem
+    privileged: true
+    environment:
+      - MQTT_HOST=mosquitto
+      - MQTT_PORT=1883
+
   cubesatsim-aprs-visualisation:
     image: ghcr.io/tomwardill/cubesatsim-aprs-parser-visualisation:main
     restart: unless-stopped
