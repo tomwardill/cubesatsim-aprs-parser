@@ -7,9 +7,10 @@ services:
     environment:
       - MQTT_HOST=mosquitto
       - MQTT_PORT=1883
+    entrypoint: ["./run-parser.sh"]
 
   cubesatsim-aprs-gauges:
-    image: ${REGISTRY}/cubesatsim-aprs-parser-gauges:main
+    image: ${REGISTRY}/cubesatsim-aprs-parser-parser:main
     restart: unless-stopped
     devices:
       - /dev/i2c-1
@@ -19,9 +20,10 @@ services:
     environment:
       - MQTT_HOST=mosquitto
       - MQTT_PORT=1883
+    entrypoint: ["./run-gauges.sh"]
 
   cubesatsim-aprs-buttons:
-    image: ${REGISTRY}/cubesatsim-aprs-parser-buttons:main
+    image: ${REGISTRY}/cubesatsim-aprs-parser-parser:main
     restart: unless-stopped
     devices:
       - /dev/gpiomem
@@ -29,6 +31,7 @@ services:
     environment:
       - MQTT_HOST=mosquitto
       - MQTT_PORT=1883
+    entrypoint: ["./run-buttons.sh"]
 
   cubesatsim-aprs-visualisation:
     image: ${REGISTRY}/cubesatsim-aprs-parser-visualisation:main
