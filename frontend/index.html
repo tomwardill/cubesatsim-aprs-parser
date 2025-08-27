@@ -117,6 +117,8 @@
             pivot.add(antennaWireframeRight);
             scene.add(pivot);
 
+            pivot.rotation.set(45.0, 0.0, 0.0);
+
             //let client = mqtt.connect('mqtt://' + window.location.host + ':9001');
             let client = mqtt.connect('mqtt://' + "zero2" + ':9001');
 
@@ -146,6 +148,11 @@
                     const action = JSON.parse(message.toString());
                     if (action.hasOwnProperty('action')) {
                         console.log(`Received action: ${action.action}`);
+                        if (action.action === 'reset') {
+                            // Handle reset action
+                            console.log('Resetting...');
+                            pivot.rotation.set(0.0, 0.0, 0.0);
+                        }
                     }
                 }
                 else if (topic === 'cubesatsim/data') {
