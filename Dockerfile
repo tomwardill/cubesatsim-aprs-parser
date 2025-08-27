@@ -10,6 +10,8 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     rtl-sdr \
     multimon-ng \
+    swig \
+    liblgpio-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the application files
