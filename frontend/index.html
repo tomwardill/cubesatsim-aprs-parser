@@ -129,20 +129,35 @@
                         console.error('Subscription error:', err);
                     }
                 });
+                client.subscribe('cubesatsim/actions', function (err) {
+                    if (!err) {
+                        console.log('Subscribed to cubesatsim/actions');
+                    } else {
+                        console.error('Subscription error:', err);
+                    }
+                });
             });
 
             client.on("message", (topic, message) => {
                 // message is Buffer
                 console.log(message.toString());
 
-                const data = JSON.parse(message.toString());
-                if (data.hasOwnProperty('mpu_roll')) {
-                    const roll = data.mpu_roll * (Math.PI / 180);
-                    const pitch = data.mpu_pitch * (Math.PI / 180);
-                    const yaw = data.mpu_yaw * (Math.PI / 180);
+                if (topic === 'cubesatsim/actions') {
+                    const action = JSON.parse(message.toString());
+                    if (action.hasOwnProperty('action')) {
+                        console.log(`Received action: ${action.action}`);
+                    }
+                }
+                else if (topic === 'cubesatsim/data') {
+                    const data = JSON.parse(message.toString());
+                    if (data.hasOwnProperty('mpu_roll')) {
+                        const roll = data.mpu_roll * (Math.PI / 180);
+                        const pitch = data.mpu_pitch * (Math.PI / 180);
+                        const yaw = data.mpu_yaw * (Math.PI / 180);
 
-                    console.log(`Roll: ${roll}, Pitch: ${pitch}, Yaw: ${yaw}`);
-                    pivot.rotation.set(pitch, yaw, roll);
+                        console.log(`Roll: ${roll}, Pitch: ${pitch}, Yaw: ${yaw}`);
+                        pivot.rotation.set(pitch, yaw, roll);
+                    }
                 }
             });
 

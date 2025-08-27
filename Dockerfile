@@ -30,6 +30,6 @@ RUN --mount=type=cache,target=/app/lg,id=${CACHE_NAME}-lg wget http://abyz.me.uk
 COPY . .
 
 # Install Python dependencies
-RUN --mount=type=cache,target=/root/.cache/uv,id=${CACHE_NAME}-uv uv sync --compile-bytecode --locked
+RUN --mount=type=cache,target=/root/.cache/uv,id=${CACHE_NAME}-uv uv sync --locked
 
 ENTRYPOINT ["./run-parser.sh"]

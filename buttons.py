@@ -1,3 +1,4 @@
+import json
 from time import sleep
 
 import click
@@ -13,8 +14,8 @@ action_mqtt_client = None
 
 
 def reset_button_pressed():
-    action_mqtt_client.publish(action_mqtt_topic, "reset")
-    logging.info("Reset button pressed, published 'reset' to MQTT")
+    action_mqtt_client.publish(action_mqtt_topic, json.dumps({"action": "reset"}))
+    logging.info("Reset button pressed, published 'reset' action to MQTT")
 
 
 @click.command()
@@ -48,7 +49,7 @@ def main(mqtt_host, mqtt_port, mqtt_topic, mqtt_username, mqtt_password):
     print(f"Subscribed to topic: {mqtt_topic}")
 
     # Configure the buttons
-    button = Button(17, hold_time=0.2, bounce_time=1.0)
+    button = Button(17, hold_time=0.2, bounce_time=0.1)
     button.when_pressed = reset_button_pressed
 
     try:
@@ -58,6 +59,7 @@ def main(mqtt_host, mqtt_port, mqtt_topic, mqtt_username, mqtt_password):
         logging.info("Disconnecting from MQTT broker...")
         action_mqtt_client.loop_stop()
         action_mqtt_client.disconnect()
+
 
 if __name__ == "__main__":
     main(auto_envvar_prefix="CUBESATSIM")

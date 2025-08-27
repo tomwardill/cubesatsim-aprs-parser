@@ -10,7 +10,7 @@ services:
     entrypoint: ["./run-parser.sh"]
 
   cubesatsim-aprs-gauges:
-    image: ${REGISTRY}/cubesatsim-aprs-parser-parser:main
+    image: ${REGISTRY}/cubesatsim-aprs-parser-gauges:main
     restart: unless-stopped
     devices:
       - /dev/i2c-1
@@ -23,7 +23,7 @@ services:
     entrypoint: ["./run-gauges.sh"]
 
   cubesatsim-aprs-buttons:
-    image: ${REGISTRY}/cubesatsim-aprs-parser-parser:main
+    image: ${REGISTRY}/cubesatsim-aprs-parser-buttons:main
     restart: unless-stopped
     devices:
       - /dev/gpiomem

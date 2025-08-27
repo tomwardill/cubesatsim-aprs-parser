@@ -14,6 +14,10 @@ target "parser" {
     context = "."
     dockerfile = "Dockerfile"
     platforms = ["linux/amd64", "linux/arm64"]
-    tags = ["qualifier:5000/cubesatsim-aprs-parser-parser:main"]
+    tags = [
+        "qualifier:5000/cubesatsim-aprs-parser-parser:main",
+        "qualifier:5000/cubesatsim-aprs-parser-gauges:main",
+        "qualifier:5000/cubesatsim-aprs-parser-buttons:main"
+    ]
     output = [ "type=registry" ]
 }
