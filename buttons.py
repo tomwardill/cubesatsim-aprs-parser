@@ -48,7 +48,7 @@ def main(mqtt_host, mqtt_port, mqtt_topic, mqtt_username, mqtt_password):
     print(f"Subscribed to topic: {mqtt_topic}")
 
     # Configure the buttons
-    button = Button(17)
+    button = Button(17, hold_time=0.2, bounce_time=1.0)
     button.when_pressed = reset_button_pressed
 
     try:
