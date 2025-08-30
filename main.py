@@ -136,6 +136,7 @@ def decode_aprs(aprs: str) -> dict:
     except Exception as e:
         sys.stderr.write(f"Error decoding APRS data: {e}\n")
         sys.stderr.flush()
+        return {}
     return data
 
 

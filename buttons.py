@@ -2,7 +2,7 @@ import json
 from time import sleep
 
 import click
-from gpiozero import Button
+from gpiozero import Button, LED
 import paho.mqtt.client as mqtt
 
 import structlog
@@ -12,10 +12,19 @@ logging = structlog.get_logger()
 action_mqtt_topic = None
 action_mqtt_client = None
 
+reset_led = LED(24)
+
 
 def reset_button_pressed():
+    reset_led.on()
     action_mqtt_client.publish(action_mqtt_topic, json.dumps({"action": "reset"}))
     logging.info("Reset button pressed, published 'reset' action to MQTT")
+
+
+def reset_button_released():
+    logging.info("Reset button released")
+    sleep(0.5)
+    reset_led.off()
 
 
 @click.command()
@@ -51,6 +60,7 @@ def main(mqtt_host, mqtt_port, mqtt_topic, mqtt_username, mqtt_password):
     # Configure the buttons
     button = Button(17, hold_time=0.2, bounce_time=0.1)
     button.when_pressed = reset_button_pressed
+    button.when_released = reset_button_released
 
     try:
         while True:

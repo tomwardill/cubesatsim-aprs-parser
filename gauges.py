@@ -89,63 +89,52 @@ def scale_voltage_to_servo(voltage):
 
 def on_message(client, userdata, message):
     """Callback function to handle incoming MQTT messages."""
-    try:
-        data = json.loads(message.payload.decode("utf-8"))
-        print(f"Received message on topic {message.topic}: {data}")
-        global frame_count
-        frame_count = frame_count + 1
-        if displays_enabled:
-            segment_display(frame_display, str(frame_count).zfill(8))
-            matrix_display(lcd, data)
-    except json.JSONDecodeError as e:
-        print(f"Failed to decode JSON from message: {e}")
-        return
+    if message.topic == "cubesatsim/data":
+        try:
+            data = json.loads(message.payload.decode("utf-8"))
+            print(f"Received message on topic {message.topic}: {data}")
+            global frame_count
+            frame_count = frame_count + 1
+            if displays_enabled:
+                segment_display(frame_display, str(frame_count).zfill(8))
+                matrix_display(lcd, data)
+        except json.JSONDecodeError as e:
+            print(f"Failed to decode JSON from message: {e}")
+            return
 
-    for key, channel in servos.items():
-        if key in data:
-            voltage = data[key]
-            if key != "battery_current":
-                servo_position = scale_voltage_to_servo(voltage)
+        for key, channel in servos.items():
+            if key in data:
+                voltage = data[key]
+                if key != "battery_current":
+                    servo_position = scale_voltage_to_servo(voltage)
+                else:
+                    # For battery current, scale to a different range if needed
+                    # Here we assume battery current is in mA and scale it to 0-90 degrees
+                    # For battery current, center at 45 degrees and scale +/-45 degrees
+                    # Assuming a typical range of 0-1000 mA
+                    servo_position = 45 + int(((voltage / 1000.0) * 90) - 45)
+                    # Ensure we stay within valid servo range (0-90)
+                    servo_position = max(0, min(90, servo_position))
+                if servo_position is not None:
+                    print(f"Setting servo {channel} to position {servo_position} for {key}")
+                    pca.servo[channel].angle = servo_position
+                else:
+                    print(f"No valid voltage for {key}, skipping servo {channel}")
             else:
-                # For battery current, scale to a different range if needed
-                # Here we assume battery current is in mA and scale it to 0-90 degrees
-                # For battery current, center at 45 degrees and scale +/-45 degrees
-                # Assuming a typical range of 0-1000 mA
-                servo_position = 45 + int(((voltage / 1000.0) * 90) - 45)
-                # Ensure we stay within valid servo range (0-90)
-                servo_position = max(0, min(90, servo_position))
-            if servo_position is not None:
-                print(f"Setting servo {channel} to position {servo_position} for {key}")
-                pca.servo[channel].angle = servo_position
-            else:
-                print(f"No valid voltage for {key}, skipping servo {channel}")
-        else:
-            print(f"{key} not found in message data, skipping servo {channel}")
+                print(f"{key} not found in message data, skipping servo {channel}")
+    elif message.topic == "cubesatsim/actions":
+        # Handle action messages
+        try:
+            action = json.loads(message.payload.decode("utf-8"))
+            print(f"Received action on topic {message.topic}: {action}")
 
+            if action.get("action") == "reset":
+                init_servos()
+        except json.JSONDecodeError as e:
+            print(f"Failed to decode JSON from action message: {e}")
+            return
 
-@click.command()
-@click.option("--mqtt_host", default="localhost", help="MQTT broker host")
-@click.option("--mqtt_port", default=1883, help="MQTT broker port")
-@click.option(
-    "--mqtt_topic", default="cubesatsim/data", help="MQTT topic to publish to"
-)
-@click.option("--mqtt_username", default=None, help="MQTT username (if required)")
-@click.option("--mqtt_password", default=None, help="MQTT password (if required)")
-def main(mqtt_host, mqtt_port, mqtt_topic, mqtt_username, mqtt_password):
-    """Connect to the MQTT broker and print connection status."""
-    client = mqtt.Client()
-    if mqtt_username and mqtt_password:
-        client.username_pw_set(mqtt_username, mqtt_password)
-
-    try:
-        client.connect(mqtt_host, mqtt_port, 60)
-        print(f"Connected to MQTT broker at {mqtt_host}:{mqtt_port}")
-    except Exception as e:
-        print(f"Failed to connect to MQTT broker: {e}")
-        return
-
-    client.loop_start()
-
+def init_servos():
     # Sweep all servos because it looks cool
     for channel in range(number_channels):
         pca.servo[channel].angle = 0
@@ -164,6 +153,33 @@ def main(mqtt_host, mqtt_port, mqtt_topic, mqtt_username, mqtt_password):
             pca.servo[channel].angle = 0
         print(f"Initialized servo {channel} to position 0")
 
+
+@click.command()
+@click.option("--mqtt_host", default="localhost", help="MQTT broker host")
+@click.option("--mqtt_port", default=1883, help="MQTT broker port")
+@click.option(
+    "--mqtt_topic", default="cubesatsim/data", help="MQTT topic to publish to"
+)
+@click.option(
+    "--action_mqtt_topic", default="cubesatsim/actions", help="MQTT topic for actions"
+)
+@click.option("--mqtt_username", default=None, help="MQTT username (if required)")
+@click.option("--mqtt_password", default=None, help="MQTT password (if required)")
+def main(mqtt_host, mqtt_port, mqtt_topic, action_mqtt_topic, mqtt_username, mqtt_password):
+    """Connect to the MQTT broker and print connection status."""
+    client = mqtt.Client()
+    if mqtt_username and mqtt_password:
+        client.username_pw_set(mqtt_username, mqtt_password)
+
+    try:
+        client.connect(mqtt_host, mqtt_port, 60)
+        print(f"Connected to MQTT broker at {mqtt_host}:{mqtt_port}")
+    except Exception as e:
+        print(f"Failed to connect to MQTT broker: {e}")
+        return
+
+    client.loop_start()
+
     # Initialize displays
     segment_display(frame_display, "0")
     segment_display(rx_freq_display, "434900")
@@ -171,9 +187,14 @@ def main(mqtt_host, mqtt_port, mqtt_topic, mqtt_username, mqtt_password):
 
     matrix_display(lcd, {"callsign": "WAITING"})
 
+    init_servos()
+
     client.subscribe(mqtt_topic)
     print(f"Subscribed to topic: {mqtt_topic}")
     client.on_message = on_message
+
+    client.subscribe(action_mqtt_topic)
+    print(f"Subscribed to action topic: {action_mqtt_topic}")
 
     try:
         while True:
