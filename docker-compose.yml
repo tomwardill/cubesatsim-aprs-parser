@@ -32,6 +32,8 @@ services:
       - MQTT_HOST=mosquitto
       - MQTT_PORT=1883
     entrypoint: ["./run-buttons.sh"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   cubesatsim-aprs-visualisation:
     image: ${REGISTRY}/cubesatsim-aprs-parser-visualisation:main
