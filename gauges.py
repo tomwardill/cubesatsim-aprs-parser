@@ -130,6 +130,8 @@ def on_message(client, userdata, message):
 
             if action.get("action") == "reset":
                 init_servos()
+                frame_count = 0
+                segment_display(frame_display, str(frame_count).zfill(8))
         except json.JSONDecodeError as e:
             print(f"Failed to decode JSON from action message: {e}")
             return

@@ -10,8 +10,8 @@ ENV UV_LINK_MODE=copy
 WORKDIR /app
 
 # Install apt dependencies
-RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked,id=${CACHE_NAME}-apt \
-    --mount=target=/var/cache/apt,type=cache,sharing=locked \
+RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked,id=${CACHE_NAME}-aptlists \
+    --mount=target=/var/cache/apt,type=cache,sharing=locked,id=${CACHE_NAME}-apt \
     rm -f /etc/apt/apt.conf.d/docker-clean && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
