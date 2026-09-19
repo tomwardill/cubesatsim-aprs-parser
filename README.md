@@ -11,7 +11,7 @@ All run from `docker-compose.yml`; the three Python services share one image
 
 | Service | Entrypoint | Does |
 |---|---|---|
-| parser | `run-parser.sh` | `rtl_fm` on 434.9 MHz → `multimon-ng` → `main.py` → MQTT `cubesatsim/data` |
+| parser | `run-parser.sh` | `rtl_fm` on 434.9 MHz → `multimon-ng` → `main.py` → MQTT `cubesatsim/data`; the same audio → `sstv_detect.py` → MQTT `cubesatsim/photos` when an SSTV image ends |
 | gauges | `run-gauges.sh` | `gauges.py`, MQTT → I2C gauges |
 | buttons | `run-buttons.sh` | `buttons.py`, GPIO buttons/LEDs, transmits mode commands |
 | visualisation | nginx | `frontend/` |
@@ -21,14 +21,21 @@ All run from `docker-compose.yml`; the three Python services share one image
 
 ## Mode commands (buttons service)
 
+The CubeSatSim shares one radio for transmit and receive, so it only hears
+commands between its own transmissions: for about 10 s after each telemetry
+packet in APRS mode, and for about 17 s after each 74 s image in SSTV mode.
+
 Pressing the APRS or SSTV button sets a pending request. On the next
-`cubesatsim/data` message (i.e. just after the CubeSatSim finishes a packet and
-starts listening) `buttons.py`:
+`cubesatsim/data` message (SSTV requested) or `cubesatsim/photos` message (APRS
+requested), i.e. just as the CubeSatSim starts listening, `buttons.py`:
 
 1. keys PTT: `rigctl -r host.docker.internal -m 2 T 1`
 2. waits 1 s, plays `sstv_mode.wav` / `aprs_mode.wav` with
    `aplay -D plughw:CARD=Device,DEV=0`
 3. unkeys PTT
+
+The request stays pending, and is sent again in the next listening window, until
+a message from the new mode arrives or it has been sent 3 times. Reset cancels it.
 
 On the CubeSatSim, direwolf decodes the packet and `dtmf_aprs_cc.py` matches
 `MODE=s` / `MODE=a`.

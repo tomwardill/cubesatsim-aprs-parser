@@ -20,8 +20,31 @@ sstv_led = LED(6)
 aprs_mode_requested = False
 sstv_mode_requested = False
 
+# A request stays pending until the CubeSatSim is seen in the new mode, and the
+# command is sent again each time it is listening, up to this many times.
+MAX_COMMAND_ATTEMPTS = 3
+command_attempts = 0
+
+
+def send_mode_command(wav_file):
+    global command_attempts
+    command_attempts += 1
+    logging.info(f"Sending {wav_file}, attempt {command_attempts} of {MAX_COMMAND_ATTEMPTS}")
+    subprocess.run(["rigctl", "-r", "host.docker.internal", "-m", "2", "T", "1"])
+    sleep(1)
+    subprocess.run(["aplay", "-D", "plughw:CARD=Device,DEV=0", wav_file])
+    subprocess.run(["rigctl", "-r", "host.docker.internal", "-m", "2", "T", "0"])
+
+
+def clear_requests():
+    global aprs_mode_requested, sstv_mode_requested, command_attempts
+    aprs_mode_requested = False
+    sstv_mode_requested = False
+    command_attempts = 0
+
 
 def reset_button_pressed():
+    clear_requests()
     reset_led.on()
     action_mqtt_client.publish(action_mqtt_topic, json.dumps({"action": "reset"}))
     logging.info("Reset button pressed, published 'reset' action to MQTT")
@@ -36,7 +59,8 @@ def reset_button_released():
 
 
 def aprs_button_pressed():
-    global aprs_mode_requested, sstv_mode_requested
+    global aprs_mode_requested, sstv_mode_requested, command_attempts
+    command_attempts = 0
     action_mqtt_client.publish(action_mqtt_topic, json.dumps({"action": "aprs"}))
     logging.info("APRS button pressed, published 'aprs' action to MQTT")
     aprs_mode_requested = True
@@ -45,7 +69,8 @@ def aprs_button_pressed():
     sstv_led.off()
 
 def sstv_button_pressed():
-    global aprs_mode_requested, sstv_mode_requested
+    global aprs_mode_requested, sstv_mode_requested, command_attempts
+    command_attempts = 0
     action_mqtt_client.publish(action_mqtt_topic, json.dumps({"action": "sstv"}))
     logging.info("SSTV button pressed, published 'sstv' action to MQTT")
     aprs_mode_requested = False
@@ -55,40 +80,38 @@ def sstv_button_pressed():
 
 
 def on_message(client, userdata, msg):
-    global aprs_mode_requested, sstv_mode_requested
     logging.info(f"Received message on topic {msg.topic}: {msg.payload.decode()}")
+    # An SSTV image has just finished: the CubeSatSim is in SSTV mode and is
+    # listening until it starts the next image.
     if msg.topic == "cubesatsim/photos":
         logging.info("Processing photo message...")
-        if aprs_mode_requested:
+        if aprs_mode_requested and command_attempts < MAX_COMMAND_ATTEMPTS:
             logging.info("Requesting APRS mode...")
-            subprocess.run(["rigctl", "-r", "host.docker.internal", "-m", "2", "T", "1"])
-            sleep(1)
-            subprocess.run(["aplay", "-D", "plughw:CARD=Device,DEV=0", "aprs_mode.wav"])
-            subprocess.run(["rigctl", "-r", "host.docker.internal", "-m", "2", "T", "0"])
+            send_mode_command("aprs_mode.wav")
+            return
+        if aprs_mode_requested:
+            logging.warning("Giving up on APRS mode, still in SSTV mode.")
         if sstv_mode_requested:
-            logging.info("SSTV mode requested but already active.")
-        if not (aprs_mode_requested or sstv_mode_requested):
-            telem_led.off()
-            sstv_led.on()
-        aprs_mode_requested = False
-        sstv_mode_requested = False
+            logging.info("SSTV mode is active.")
+        clear_requests()
+        telem_led.off()
+        sstv_led.on()
 
+    # A telemetry packet has just finished: the CubeSatSim is in APRS mode and
+    # is listening until its next packet.
     if msg.topic == "cubesatsim/data":
         logging.info("Processing data message...")
-        if aprs_mode_requested:
-            logging.info("APRS mode requested but already active.")
-        if sstv_mode_requested:
+        if sstv_mode_requested and command_attempts < MAX_COMMAND_ATTEMPTS:
             logging.info("Requesting SSTV mode...")
-            logging.info("SSTV mode requested but already active.")
-            subprocess.run(["rigctl", "-r", "host.docker.internal", "-m", "2", "T", "1"])
-            sleep(1)
-            subprocess.run(["aplay", "-D", "plughw:CARD=Device,DEV=0", "sstv_mode.wav"])
-            subprocess.run(["rigctl", "-r", "host.docker.internal", "-m", "2", "T", "0"])
-        if not (aprs_mode_requested or sstv_mode_requested):
-            telem_led.on()
-            sstv_led.off()
-        aprs_mode_requested = False
-        sstv_mode_requested = False
+            send_mode_command("sstv_mode.wav")
+            return
+        if sstv_mode_requested:
+            logging.warning("Giving up on SSTV mode, still in APRS mode.")
+        if aprs_mode_requested:
+            logging.info("APRS mode is active.")
+        clear_requests()
+        telem_led.on()
+        sstv_led.off()
 
 
 @click.command()
