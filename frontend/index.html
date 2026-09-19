@@ -214,8 +214,14 @@
             const sstvCursor = document.querySelector('#sstv-cursor');
             const sstvImage = document.querySelector('#sstv-image');
             const sstvContext = sstvImage.getContext('2d');
-            sstvContext.fillStyle = '#000';
-            sstvContext.fillRect(0, 0, sstvImage.width, sstvImage.height);
+
+            function clearSstvImage() {
+                sstvContext.fillStyle = '#000';
+                sstvContext.fillRect(0, 0, sstvImage.width, sstvImage.height);
+                sstvCursor.style.display = 'none';
+            }
+
+            clearSstvImage();
 
             // A button press picks the view straight away. The CubeSatSim takes a
             // while to follow (it finishes what it is sending first), so what it is
@@ -234,6 +240,9 @@
                 banner.classList.add('active');
                 clearTimeout(pendingTimer);
                 pendingTimer = setTimeout(() => modeTimedOut(mode), MODE_TIMEOUT[mode] * 1000);
+                if (mode === 'sstv') {
+                    clearSstvImage();
+                }
                 showView(mode === 'sstv' ? 'sstv' : 'telemetry', MODE_TIMEOUT[mode]);
             }
 
@@ -326,6 +335,7 @@
 
                 if (topic === 'cubesatsim/sstv/start') {
                     sstvStatus.textContent = 'SSTV IMAGE STARTING';
+                    clearSstvImage();
                     modeConfirmed('sstv');
                     showView('sstv');
                 }
