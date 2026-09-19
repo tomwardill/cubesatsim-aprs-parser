@@ -188,7 +188,7 @@
             const PANEL_RAMP = ['#0e0b05', '#311c00', '#503300', '#704c00', '#906600',
                 '#b28300', '#d4a015', '#f0c05a', '#ffe28e'].map(hex => new THREE.Color(hex));
             // Top of the colour scale, in volts. ?vmax= overrides it at the venue.
-            const PANEL_MAX = Number(new URLSearchParams(window.location.search).get('vmax')) || 2.5;
+            const PANEL_MAX = Number(new URLSearchParams(window.location.search).get('vmax')) || 6;
             const PANELS = [
                 { label: '+X', key: 'PLUS_X_voltage', normal: [1, 0, 0] },
                 { label: '-X', key: 'MINUS_X_voltage', normal: [-1, 0, 0] },

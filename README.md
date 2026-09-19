@@ -26,11 +26,11 @@ gyro, a solar panel on each face shaded by that panel's voltage, and the SSTV
 image painted line by line when one is coming in.
 
 Panel shading is a sequential ramp, a single hue from dark (no light) to bright
-(full sun), fixed to 0 V - 2.50 V so a colour always means the same voltage.
-`?vmax=` changes the top of the scale if the venue needs it, e.g.
-`http://zero2/?vmax=1.2` for a dim room. There is no scale on screen: the
-physical gauges carry the levels. The panel in the most light gets a brighter
-frame when one of them clearly leads.
+(full sun), fixed to 0 V - 6 V so a colour always means the same voltage. A panel
+only nears 6 V in full sun, so indoors everything sits near the dark end; `?vmax=`
+lowers the top of the scale to spread a dim room out, e.g. `http://zero2/?vmax=1.5`.
+There is no scale on screen: the physical gauges carry the levels. The panel in
+the most light gets a brighter frame when one of them clearly leads.
 
 ## Mode commands (buttons service)
 
