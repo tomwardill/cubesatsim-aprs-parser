@@ -27,7 +27,63 @@
         }
     </style>
 
+    <style>
+        #sstv {
+            position: absolute;
+            inset: 0;
+            z-index: 50;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2vh;
+            background: #000;
+            color: #00ff00;
+            font-family: monospace;
+            font-size: 3vh;
+        }
+
+        #sstv.active {
+            display: flex;
+        }
+
+        #sstv-frame {
+            position: relative;
+            height: 80vh;
+            max-width: 95vw;
+            aspect-ratio: 320 / 256;
+            border: 3px solid #00ff00;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.4);
+        }
+
+        #sstv-image {
+            width: 100%;
+            height: 100%;
+            display: block;
+            image-rendering: pixelated;
+        }
+
+        /* the line being received */
+        #sstv-cursor {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: calc(100% / 256);
+            background: #00ff00;
+            box-shadow: 0 0 12px 3px rgba(0, 255, 0, 0.8);
+            display: none;
+        }
+    </style>
+
     <canvas id="c"></canvas>
+
+    <div id="sstv">
+        <div id="sstv-frame">
+            <canvas id="sstv-image" width="320" height="256"></canvas>
+            <div id="sstv-cursor"></div>
+        </div>
+        <div id="sstv-status">WAITING FOR SSTV IMAGE</div>
+    </div>
 
     <script type="importmap">
         {
@@ -119,8 +175,43 @@
 
             pivot.rotation.set(45.0, 0.0, 0.0);
 
-            //let client = mqtt.connect('mqtt://' + window.location.host + ':9001');
-            let client = mqtt.connect('mqtt://' + "zero2" + ':9001');
+            // SSTV view: the image is painted a line at a time as it is decoded
+            const sstvView = document.querySelector('#sstv');
+            const sstvStatus = document.querySelector('#sstv-status');
+            const sstvCursor = document.querySelector('#sstv-cursor');
+            const sstvImage = document.querySelector('#sstv-image');
+            const sstvContext = sstvImage.getContext('2d');
+            sstvContext.fillStyle = '#000';
+            sstvContext.fillRect(0, 0, sstvImage.width, sstvImage.height);
+
+            // A button press picks the view straight away. The CubeSatSim takes a
+            // while to follow (it finishes its image first), so what it is still
+            // sending in the old mode mustn't flip the view back in the meantime.
+            let viewHeldUntil = 0;
+
+            function showView(view, holdSeconds = 0) {
+                const held = Date.now() < viewHeldUntil;
+                if (holdSeconds) {
+                    viewHeldUntil = Date.now() + holdSeconds * 1000;
+                } else if (held) {
+                    return;
+                }
+                sstvView.classList.toggle('active', view === 'sstv');
+            }
+
+            function drawSstvLine(line, rgb) {
+                const bytes = Uint8Array.from(atob(rgb), c => c.charCodeAt(0));
+                const row = sstvContext.createImageData(bytes.length / 3, 1);
+                for (let i = 0; i < bytes.length / 3; i++) {
+                    row.data.set([bytes[i * 3], bytes[i * 3 + 1], bytes[i * 3 + 2], 255], i * 4);
+                }
+                sstvContext.putImageData(row, 0, line);
+                sstvCursor.style.display = 'block';
+                sstvCursor.style.top = `${(line + 1) / sstvImage.height * 100}%`;
+                sstvStatus.textContent = `RECEIVING SSTV IMAGE - LINE ${line + 1} / ${sstvImage.height}`;
+            }
+
+            let client = mqtt.connect('mqtt://' + window.location.hostname + ':9001');
 
             client.on('connect', function () {
                 console.log('Connected to MQTT broker');
@@ -138,13 +229,34 @@
                         console.error('Subscription error:', err);
                     }
                 });
+                client.subscribe('cubesatsim/sstv/#', function (err) {
+                    if (!err) {
+                        console.log('Subscribed to cubesatsim/sstv/#');
+                    } else {
+                        console.error('Subscription error:', err);
+                    }
+                });
             });
 
             client.on("message", (topic, message) => {
                 // message is Buffer
+                if (topic === 'cubesatsim/sstv/line') {
+                    const data = JSON.parse(message.toString());
+                    drawSstvLine(data.line, data.rgb);
+                    showView('sstv');
+                    return;
+                }
                 console.log(message.toString());
 
-                if (topic === 'cubesatsim/actions') {
+                if (topic === 'cubesatsim/sstv/start') {
+                    sstvStatus.textContent = 'SSTV IMAGE STARTING';
+                    showView('sstv');
+                }
+                else if (topic === 'cubesatsim/sstv/end') {
+                    sstvCursor.style.display = 'none';
+                    sstvStatus.textContent = 'IMAGE COMPLETE - WAITING FOR NEXT IMAGE';
+                }
+                else if (topic === 'cubesatsim/actions') {
                     const action = JSON.parse(message.toString());
                     if (action.hasOwnProperty('action')) {
                         console.log(`Received action: ${action.action}`);
@@ -153,9 +265,19 @@
                             console.log('Resetting...');
                             pivot.rotation.set(0.0, 0.0, 0.0);
                         }
+                        else if (action.action === 'sstv') {
+                            // telemetry carries on for up to 3 tries, 12 s apart
+                            sstvStatus.textContent = 'SSTV MODE REQUESTED - WAITING FOR IMAGE';
+                            showView('sstv', 45);
+                        }
+                        else if (action.action === 'aprs') {
+                            // images carry on for up to 3 tries, 92 s apart
+                            showView('telemetry', 300);
+                        }
                     }
                 }
                 else if (topic === 'cubesatsim/data') {
+                    showView('telemetry');
                     const data = JSON.parse(message.toString());
                     if (data.hasOwnProperty('mpu_roll')) {
                         const roll = data.mpu_roll * (Math.PI / 180);
