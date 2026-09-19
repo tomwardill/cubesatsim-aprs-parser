@@ -75,7 +75,40 @@
         }
     </style>
 
+    <style>
+        /* sits above both the cube and the SSTV image */
+        #banner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: none;
+            padding: 1.5vh 2vw;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.85);
+            border-bottom: 2px solid #00ff00;
+            color: #00ff00;
+            font-family: monospace;
+            font-size: 3vh;
+            letter-spacing: 0.1em;
+            animation: banner-pulse 1.5s ease-in-out infinite;
+        }
+
+        #banner.active {
+            display: block;
+        }
+
+        @keyframes banner-pulse {
+            50% {
+                opacity: 0.55;
+            }
+        }
+    </style>
+
     <canvas id="c"></canvas>
+
+    <div id="banner"></div>
 
     <div id="sstv">
         <div id="sstv-frame">
@@ -185,9 +218,51 @@
             sstvContext.fillRect(0, 0, sstvImage.width, sstvImage.height);
 
             // A button press picks the view straight away. The CubeSatSim takes a
-            // while to follow (it finishes its image first), so what it is still
-            // sending in the old mode mustn't flip the view back in the meantime.
+            // while to follow (it finishes what it is sending first), so what it is
+            // still sending in the old mode mustn't flip the view back in the
+            // meantime. buttons.py retries up to 3 times, about 12 s apart waiting
+            // for telemetry and about 92 s apart waiting for an image to end.
+            const MODE_TIMEOUT = { sstv: 45, aprs: 300 };
+            const banner = document.querySelector('#banner');
             let viewHeldUntil = 0;
+            let pendingMode = null;
+            let pendingTimer = null;
+
+            function requestMode(mode) {
+                pendingMode = mode;
+                banner.textContent = `CHANGING TO ${mode.toUpperCase()} MODE AT END OF TRANSMISSION`;
+                banner.classList.add('active');
+                clearTimeout(pendingTimer);
+                pendingTimer = setTimeout(() => modeTimedOut(mode), MODE_TIMEOUT[mode] * 1000);
+                showView(mode === 'sstv' ? 'sstv' : 'telemetry', MODE_TIMEOUT[mode]);
+            }
+
+            // the CubeSatSim is sending in the mode we asked for
+            function modeConfirmed(mode) {
+                if (pendingMode !== mode) {
+                    return;
+                }
+                pendingMode = null;
+                clearTimeout(pendingTimer);
+                banner.classList.remove('active');
+            }
+
+            function cancelRequest() {
+                pendingMode = null;
+                clearTimeout(pendingTimer);
+                banner.classList.remove('active');
+                // let whatever the CubeSatSim sends next pick the view again
+                viewHeldUntil = 0;
+            }
+
+            function modeTimedOut(mode) {
+                if (pendingMode !== mode) {
+                    return;
+                }
+                pendingMode = null;
+                banner.textContent = `${mode.toUpperCase()} MODE NOT CONFIRMED - PRESS THE BUTTON AGAIN`;
+                setTimeout(() => banner.classList.remove('active'), 20000);
+            }
 
             function showView(view, holdSeconds = 0) {
                 const held = Date.now() < viewHeldUntil;
@@ -243,6 +318,7 @@
                 if (topic === 'cubesatsim/sstv/line') {
                     const data = JSON.parse(message.toString());
                     drawSstvLine(data.line, data.rgb);
+                    modeConfirmed('sstv');
                     showView('sstv');
                     return;
                 }
@@ -250,6 +326,7 @@
 
                 if (topic === 'cubesatsim/sstv/start') {
                     sstvStatus.textContent = 'SSTV IMAGE STARTING';
+                    modeConfirmed('sstv');
                     showView('sstv');
                 }
                 else if (topic === 'cubesatsim/sstv/end') {
@@ -264,19 +341,19 @@
                             // Handle reset action
                             console.log('Resetting...');
                             pivot.rotation.set(0.0, 0.0, 0.0);
+                            cancelRequest();
                         }
                         else if (action.action === 'sstv') {
-                            // telemetry carries on for up to 3 tries, 12 s apart
                             sstvStatus.textContent = 'SSTV MODE REQUESTED - WAITING FOR IMAGE';
-                            showView('sstv', 45);
+                            requestMode('sstv');
                         }
                         else if (action.action === 'aprs') {
-                            // images carry on for up to 3 tries, 92 s apart
-                            showView('telemetry', 300);
+                            requestMode('aprs');
                         }
                     }
                 }
                 else if (topic === 'cubesatsim/data') {
+                    modeConfirmed('aprs');
                     showView('telemetry');
                     const data = JSON.parse(message.toString());
                     if (data.hasOwnProperty('mpu_roll')) {
