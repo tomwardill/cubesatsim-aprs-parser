@@ -29,10 +29,11 @@ Pressing the APRS or SSTV button sets a pending request. On the next
 `cubesatsim/data` message (SSTV requested) or `cubesatsim/photos` message (APRS
 requested), i.e. just as the CubeSatSim starts listening, `buttons.py`:
 
-1. keys PTT: `rigctl -r host.docker.internal -m 2 T 1`
-2. waits 1 s, plays `sstv_mode.wav` / `aprs_mode.wav` with
+1. sets the transmit level: `amixer -c Device sset Speaker 4` (`--tx_volume`)
+2. keys PTT: `rigctl -r host.docker.internal -m 2 T 1`
+3. waits 1 s, plays `sstv_mode.wav` / `aprs_mode.wav` with
    `aplay -D plughw:CARD=Device,DEV=0`
-3. unkeys PTT
+4. unkeys PTT
 
 The request stays pending, and is sent again in the next listening window, until
 a message from the new mode arrives or it has been sent 3 times. Reset cancels it.
@@ -63,7 +64,10 @@ Check one with `atest sstv_mode.wav`.
 
 ### Transmit audio level
 
-Set with the sound card's `Speaker` control, then persist it:
+`buttons.py` sets the sound card's `Speaker` control before each transmission
+(`--tx_volume`, default 4), because a desktop sound server on the host has been
+seen to put it back to 0, which silently mutes the command. To try a level by
+hand, and keep it across reboots:
 
     amixer -c Device sset Speaker 4
     sudo alsactl store

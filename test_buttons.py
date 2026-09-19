@@ -32,12 +32,14 @@ def test_aprs_is_sent_when_an_sstv_image_ends(played):
     assert played() == ["aprs_mode.wav"]
 
 
-def test_ptt_is_released_after_sending(played, monkeypatch):
+def test_level_is_set_and_ptt_released_around_sending(played, monkeypatch):
     commands = []
     monkeypatch.setattr(buttons.subprocess, "run", lambda cmd: commands.append(cmd))
     buttons.sstv_button_pressed()
     buttons.on_message(None, None, message("cubesatsim/data"))
-    assert [cmd[-1] for cmd in commands] == ["1", "sstv_mode.wav", "0"]
+    assert [cmd[0] for cmd in commands] == ["amixer", "rigctl", "aplay", "rigctl"]
+    assert commands[0][-2:] == ["Speaker", "4"]
+    assert [cmd[-1] for cmd in commands[1:]] == ["1", "sstv_mode.wav", "0"]
 
 
 def test_request_is_retried_until_the_mode_changes(played):

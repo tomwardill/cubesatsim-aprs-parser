@@ -25,11 +25,17 @@ sstv_mode_requested = False
 MAX_COMMAND_ATTEMPTS = 3
 command_attempts = 0
 
+# Transmit audio level, the sound card's Speaker control (0-37). Set before every
+# transmission because other things on the host (e.g. a desktop sound server)
+# can change it, and at 0 the command goes out as a silent carrier.
+tx_volume = 4
+
 
 def send_mode_command(wav_file):
     global command_attempts
     command_attempts += 1
     logging.info(f"Sending {wav_file}, attempt {command_attempts} of {MAX_COMMAND_ATTEMPTS}")
+    subprocess.run(["amixer", "-q", "-c", "Device", "sset", "Speaker", str(tx_volume)])
     subprocess.run(["rigctl", "-r", "host.docker.internal", "-m", "2", "T", "1"])
     sleep(1)
     subprocess.run(["aplay", "-D", "plughw:CARD=Device,DEV=0", wav_file])
@@ -122,8 +128,12 @@ def on_message(client, userdata, msg):
 )
 @click.option("--mqtt_username", default=None, help="MQTT username (if required)")
 @click.option("--mqtt_password", default=None, help="MQTT password (if required)")
-def main(mqtt_host, mqtt_port, mqtt_topic, mqtt_username, mqtt_password):
+@click.option("--tx_volume", "volume", default=tx_volume, help="Sound card Speaker level (0-37) for transmitting")
+def main(mqtt_host, mqtt_port, mqtt_topic, mqtt_username, mqtt_password, volume):
     """Connect to the MQTT broker and print connection status."""
+
+    global tx_volume
+    tx_volume = volume
 
     global action_mqtt_topic
     action_mqtt_topic = mqtt_topic
