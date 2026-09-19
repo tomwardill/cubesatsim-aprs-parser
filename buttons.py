@@ -1,4 +1,5 @@
 import json
+import subprocess
 from time import sleep
 
 import click
@@ -13,8 +14,8 @@ action_mqtt_topic = None
 action_mqtt_client = None
 
 reset_led = LED(24)
-telem_led = LED(6)
-sstv_led = LED(5)
+telem_led = LED(5)
+sstv_led = LED(6)
 
 aprs_mode_requested = False
 sstv_mode_requested = False
@@ -60,22 +61,34 @@ def on_message(client, userdata, msg):
         logging.info("Processing photo message...")
         if aprs_mode_requested:
             logging.info("Requesting APRS mode...")
+            subprocess.run(["rigctl", "-r", "host.docker.internal", "-m", "2", "T", "1"])
+            sleep(1)
+            subprocess.run(["aplay", "-D", "plughw:CARD=Device,DEV=0", "aprs_mode.wav"])
+            subprocess.run(["rigctl", "-r", "host.docker.internal", "-m", "2", "T", "0"])
         if sstv_mode_requested:
             logging.info("SSTV mode requested but already active.")
+        if not (aprs_mode_requested or sstv_mode_requested):
+            telem_led.off()
+            sstv_led.on()
         aprs_mode_requested = False
         sstv_mode_requested = False
-        telem_led.on()
-        sstv_led.off()
+
     if msg.topic == "cubesatsim/data":
         logging.info("Processing data message...")
         if aprs_mode_requested:
             logging.info("APRS mode requested but already active.")
         if sstv_mode_requested:
             logging.info("Requesting SSTV mode...")
+            logging.info("SSTV mode requested but already active.")
+            subprocess.run(["rigctl", "-r", "host.docker.internal", "-m", "2", "T", "1"])
+            sleep(1)
+            subprocess.run(["aplay", "-D", "plughw:CARD=Device,DEV=0", "sstv_mode.wav"])
+            subprocess.run(["rigctl", "-r", "host.docker.internal", "-m", "2", "T", "0"])
+        if not (aprs_mode_requested or sstv_mode_requested):
+            telem_led.on()
+            sstv_led.off()
         aprs_mode_requested = False
         sstv_mode_requested = False
-        telem_led.off()
-        sstv_led.on()
 
 
 @click.command()
@@ -120,10 +133,10 @@ def main(mqtt_host, mqtt_port, mqtt_topic, mqtt_username, mqtt_password):
     button.when_pressed = reset_button_pressed
     button.when_released = reset_button_released
 
-    aprs_button = Button(22, hold_time=0.2, bounce_time=0.1)
+    aprs_button = Button(27, hold_time=0.2, bounce_time=0.1)
     aprs_button.when_pressed = aprs_button_pressed
 
-    sstv_button = Button(27, hold_time=0.2, bounce_time=0.1)
+    sstv_button = Button(22, hold_time=0.2, bounce_time=0.1)
     sstv_button.when_pressed = sstv_button_pressed
 
     try:

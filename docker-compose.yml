@@ -27,6 +27,7 @@ services:
     restart: unless-stopped
     devices:
       - /dev/gpiomem
+      - /dev/snd
     privileged: true
     environment:
       - MQTT_HOST=mosquitto

@@ -19,6 +19,8 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked,id=${CACHE_NAME}
     multimon-ng \
     swig \
     libhamlib-utils \
+    alsa-utils \
+    libsndfile1-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN --mount=type=cache,target=/app/lg,id=${CACHE_NAME}-lg wget http://abyz.me.uk/lg/lg.zip && \
