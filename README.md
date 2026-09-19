@@ -23,15 +23,14 @@ All run from `docker-compose.yml`; the three Python services share one image
 
 `frontend/` shows a wireframe CubeSat driven by the MQTT feed: attitude from the
 gyro, a solar panel on each face shaded by that panel's voltage, and the SSTV
-image painted line by line when one is coming in. The camera drifts around the
-cube so every panel comes into view.
+image painted line by line when one is coming in.
 
 Panel shading is a sequential ramp, a single hue from dark (no light) to bright
 (full sun), fixed to 0 V - 2.50 V so a colour always means the same voltage.
 `?vmax=` changes the top of the scale if the venue needs it, e.g.
-`http://zero2/?vmax=1.2` for a dim room. The readout lists every panel with its
-voltage, and marks the brightest one when it clearly leads, so the reading never
-depends on colour alone.
+`http://zero2/?vmax=1.2` for a dim room. There is no scale on screen: the
+physical gauges carry the levels. The panel in the most light gets a brighter
+frame when one of them clearly leads.
 
 ## Mode commands (buttons service)
 
