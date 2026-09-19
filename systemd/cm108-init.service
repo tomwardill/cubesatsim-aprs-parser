@@ -1,0 +1,12 @@
+[Unit]
+Description=cm108-init Service
+After=syslog.target network.target
+
+[Service]
+User=root
+Environment=LD_LIBRARY_PATH=/usr/local/lib
+ExecStart=rigctld -vvvv -m 6 -P CM108 -p /dev/hidraw0
+ExecStop=pkill rigctld
+
+[Install]
+WantedBy=multi-user.target
