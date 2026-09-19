@@ -19,6 +19,20 @@ All run from `docker-compose.yml`; the three Python services share one image
 
 `update.sh` pulls the images named by `REGISTRY` in `.env` and restarts.
 
+## Visualisation
+
+`frontend/` shows a wireframe CubeSat driven by the MQTT feed: attitude from the
+gyro, a solar panel on each face shaded by that panel's voltage, and the SSTV
+image painted line by line when one is coming in. The camera drifts around the
+cube so every panel comes into view.
+
+Panel shading is a sequential ramp, a single hue from dark (no light) to bright
+(full sun), fixed to 0 V - 2.50 V so a colour always means the same voltage.
+`?vmax=` changes the top of the scale if the venue needs it, e.g.
+`http://zero2/?vmax=1.2` for a dim room. The readout lists every panel with its
+voltage, and marks the brightest one when it clearly leads, so the reading never
+depends on colour alone.
+
 ## Mode commands (buttons service)
 
 The CubeSatSim shares one radio for transmit and receive, so it only hears
