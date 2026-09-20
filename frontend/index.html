@@ -77,12 +77,32 @@
 
     <style>
         /* sits above both the cube and the SSTV image */
-        #banner {
+        #top-bar {
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            z-index: 100;
+            z-index: 110;
+        }
+
+        #fault {
+            display: none;
+            padding: 1.5vh 2vw;
+            text-align: center;
+            background: rgba(26, 0, 0, 0.92);
+            border-bottom: 2px solid #ff4b3e;
+            color: #ff7a70;
+            font-family: monospace;
+            font-size: 3vh;
+            letter-spacing: 0.1em;
+            animation: banner-pulse 1s ease-in-out infinite;
+        }
+
+        #fault.active {
+            display: block;
+        }
+
+        #banner {
             display: none;
             padding: 1.5vh 2vw;
             text-align: center;
@@ -108,7 +128,10 @@
 
     <canvas id="c"></canvas>
 
-    <div id="banner"></div>
+    <div id="top-bar">
+        <div id="fault"></div>
+        <div id="banner"></div>
+    </div>
 
     <div id="sstv">
         <div id="sstv-frame">
@@ -319,6 +342,7 @@
             // for telemetry and about 92 s apart waiting for an image to end.
             const MODE_TIMEOUT = { sstv: 45, aprs: 300 };
             const banner = document.querySelector('#banner');
+            const faultBar = document.querySelector('#fault');
             let viewHeldUntil = 0;
             let pendingMode = null;
             let pendingTimer = null;
@@ -402,6 +426,13 @@
                         console.error('Subscription error:', err);
                     }
                 });
+                client.subscribe('cubesatsim/faults', function (err) {
+                    if (!err) {
+                        console.log('Subscribed to cubesatsim/faults');
+                    } else {
+                        console.error('Subscription error:', err);
+                    }
+                });
                 client.subscribe('cubesatsim/sstv/#', function (err) {
                     if (!err) {
                         console.log('Subscribed to cubesatsim/sstv/#');
@@ -422,7 +453,13 @@
                 }
                 console.log(message.toString());
 
-                if (topic === 'cubesatsim/sstv/start') {
+                // something stopped a button press reaching the CubeSatSim
+                if (topic === 'cubesatsim/faults') {
+                    const fault = JSON.parse(message.toString()).fault;
+                    faultBar.textContent = fault || '';
+                    faultBar.classList.toggle('active', Boolean(fault));
+                }
+                else if (topic === 'cubesatsim/sstv/start') {
                     sstvStatus.textContent = 'SSTV IMAGE STARTING';
                     clearSstvImage();
                     modeConfirmed('sstv');

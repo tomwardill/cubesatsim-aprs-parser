@@ -12,6 +12,7 @@ logging = structlog.get_logger()
 
 action_mqtt_topic = None
 action_mqtt_client = None
+fault_mqtt_topic = "cubesatsim/faults"
 
 reset_led = LED(24)
 telem_led = LED(5)
@@ -31,15 +32,59 @@ command_attempts = 0
 tx_volume = 4
 
 
+def run(command):
+    """Run a command, returning whether it worked and logging it if it didn't."""
+    result = subprocess.run(command, capture_output=True, text=True)
+    if result.returncode:
+        detail = (result.stderr or result.stdout).strip().splitlines()
+        logging.error(
+            f"{command[0]} failed with status {result.returncode}"
+            + (f": {detail[-1]}" if detail else "")
+        )
+    return not result.returncode
+
+
+def report_fault(fault):
+    """Put a fault on the visualisation and blink the LED of the mode asked for.
+
+    The USB sound card carries both the transmit audio and the PTT line, so when
+    it drops off the bus a button press quietly does nothing. Say so instead.
+    """
+    logging.error(f"Fault: {fault}")
+    # retained, so a display that connects later still sees it
+    action_mqtt_client.publish(fault_mqtt_topic, json.dumps({"fault": fault}), retain=True)
+    (sstv_led if sstv_mode_requested else telem_led).blink(on_time=0.08, off_time=0.08)
+
+
+def clear_fault():
+    action_mqtt_client.publish(fault_mqtt_topic, json.dumps({"fault": None}), retain=True)
+
+
 def send_mode_command(wav_file):
+    """Transmit a mode command, returning whether it actually went out."""
     global command_attempts
     command_attempts += 1
     logging.info(f"Sending {wav_file}, attempt {command_attempts} of {MAX_COMMAND_ATTEMPTS}")
-    subprocess.run(["amixer", "-q", "-c", "Device", "sset", "Speaker", str(tx_volume)])
-    subprocess.run(["rigctl", "-r", "host.docker.internal", "-m", "2", "T", "1"])
-    sleep(1)
-    subprocess.run(["aplay", "-D", "plughw:CARD=Device,DEV=0", wav_file])
-    subprocess.run(["rigctl", "-r", "host.docker.internal", "-m", "2", "T", "0"])
+
+    if not run(["amixer", "-q", "-c", "Device", "sset", "Speaker", str(tx_volume)]):
+        report_fault("SOUND CARD MISSING - CHECK THE USB LEAD")
+        return False
+    if not run(["rigctl", "-r", "host.docker.internal", "-m", "2", "T", "1"]):
+        report_fault("TRANSMITTER WILL NOT KEY - CHECK THE USB LEAD")
+        return False
+    try:
+        sleep(1)
+        played = run(["aplay", "-q", "-D", "plughw:CARD=Device,DEV=0", wav_file])
+    finally:
+        # always unkey, even if playing the file went wrong
+        run(["rigctl", "-r", "host.docker.internal", "-m", "2", "T", "0"])
+    if not played:
+        report_fault("SOUND CARD WILL NOT PLAY - CHECK THE USB LEAD")
+        return False
+
+    logging.info(f"Transmitted {wav_file}")
+    clear_fault()
+    return True
 
 
 def clear_requests():
@@ -160,6 +205,7 @@ def main(mqtt_host, mqtt_port, mqtt_topic, mqtt_username, mqtt_password, volume)
     logging.info("Subscribed to topic: cubesatsim/data")
 
     action_mqtt_client.on_message = on_message
+    clear_fault()
 
     # Configure the buttons
     button = Button(17, hold_time=0.2, bounce_time=0.1)

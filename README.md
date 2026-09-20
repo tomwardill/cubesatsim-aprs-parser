@@ -51,6 +51,11 @@ requested), i.e. just as the CubeSatSim starts listening, `buttons.py`:
 The request stays pending, and is sent again in the next listening window, until
 a message from the new mode arrives or it has been sent 3 times. Reset cancels it.
 
+Every step is checked. If the sound card or PTT is missing, the fault goes to
+`cubesatsim/faults` (retained), which puts a red banner on the visualisation,
+and the LED for the mode being asked for blinks fast. The next transmission that
+works clears it.
+
 On the CubeSatSim, direwolf decodes the packet and `dtmf_aprs_cc.py` matches
 `MODE=s` / `MODE=a`.
 
@@ -59,8 +64,17 @@ On the CubeSatSim, direwolf decodes the packet and `dtmf_aprs_cc.py` matches
 PTT is the CM108 GPIO on the radio's USB sound card, driven by `rigctld` on the
 host (hamlib built from source into `/usr/local`):
 
+    sudo cp udev/99-cm108.rules /etc/udev/rules.d/
     sudo cp systemd/cm108-init.service /lib/systemd/system/
+    sudo udevadm control --reload-rules && sudo udevadm trigger --subsystem-match=hidraw
     sudo systemctl enable --now cm108-init
+
+The udev rule matters. If the card drops off the USB bus it comes back on a
+different `/dev/hidraw*`, and `rigctld` holding the old one open is what keeps
+it on the wrong number. The rule gives the card a fixed `/dev/cm108` and the
+unit is bound to it, so `rigctld` stops with the card and starts again with it.
+Without this, PTT fails silently and every button press goes out with no
+carrier. Check it with `ls -l /dev/cm108` and `rigctl -m 2 T 0`.
 
 The SA818 transmits on the CubeSatSim's receive frequency, narrow:
 

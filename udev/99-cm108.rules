@@ -1,0 +1,4 @@
+# CM108 USB sound card: PTT for the radio. Give it a fixed name, because the
+# hidraw numbering moves when the card drops off the bus and comes back, and
+# start/restart rigctld with the device so it never holds a dead node open.
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0d8c", ATTRS{idProduct}=="0012", SYMLINK+="cm108", TAG+="systemd", ENV{SYSTEMD_WANTS}+="cm108-init.service"

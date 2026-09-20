@@ -1,12 +1,18 @@
 [Unit]
 Description=cm108-init Service
 After=syslog.target network.target
+# tied to the card: stops when it drops off the USB bus, and the udev rule
+# starts it again when the card comes back
+BindsTo=dev-cm108.device
+After=dev-cm108.device
 
 [Service]
 User=root
 Environment=LD_LIBRARY_PATH=/usr/local/lib
-ExecStart=rigctld -vvvv -m 6 -P CM108 -p /dev/hidraw0
+ExecStart=rigctld -vvvv -m 6 -P CM108 -p /dev/cm108
 ExecStop=pkill rigctld
+Restart=on-failure
+RestartSec=2
 
 [Install]
 WantedBy=multi-user.target
